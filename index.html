@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EcoFly · Cronograma compartido</title>
+<style>
+:root{--green:#38B000;--blue:#00A8E8;--graphite:#2B2D42;--white:#fff;--bg:#f4f7f8;--muted:#65717d;--line:#dfe6e9}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,Arial,sans-serif;background:var(--bg);color:var(--graphite)}
+header{background:linear-gradient(120deg,#202238,#2B2D42);color:white;padding:28px 20px}
+.wrap{max-width:1050px;margin:auto}.brand{display:flex;align-items:center;gap:14px}.mark{width:52px;height:52px;border-radius:16px;background:#fff;display:grid;place-items:center;color:var(--green);font-size:28px;font-weight:900}.brand h1{margin:0;font-size:30px;letter-spacing:.3px}.brand p{margin:5px 0 0;color:#d8e4e8}
+main{max-width:1050px;margin:24px auto;padding:0 18px 50px}.intro{background:#fff;border:1px solid var(--line);border-radius:18px;padding:22px;margin-bottom:18px;box-shadow:0 5px 20px #18212a08}
+h2{margin:0 0 8px;font-size:22px}.intro p{color:var(--muted);line-height:1.55;margin:8px 0}
+.status{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:700;padding:8px 11px;border-radius:99px;background:#eef2f3;color:#59636a;margin-top:8px}.dot{width:8px;height:8px;border-radius:50%;background:#9aa4aa}.status.ok{background:#eaf8e6;color:#247a0a}.status.ok .dot{background:var(--green)}.status.err{background:#fff0ed;color:#a33a2a}.status.err .dot{background:#d94835}
+.toolbar{display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin:20px 0 12px}.progress{font-weight:800}.bar{height:9px;background:#e1e8eb;border-radius:99px;overflow:hidden;margin-top:8px}.bar span{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--green),var(--blue));transition:width .2s}
+.group{background:#fff;border:1px solid var(--line);border-radius:16px;margin:12px 0;overflow:hidden}.group h3{margin:0;background:#f9fbfb;padding:14px 17px;border-bottom:1px solid var(--line);font-size:16px}.task{display:grid;grid-template-columns:26px 115px 1fr;gap:12px;align-items:start;padding:15px 17px;border-bottom:1px solid #edf1f2}.task:last-child{border-bottom:0}.task input{width:19px;height:19px;accent-color:var(--green);cursor:pointer;margin-top:2px}.date{font-size:13px;font-weight:800;color:#4f6873}.task-title{font-weight:750}.task-desc{font-size:13px;color:var(--muted);margin-top:4px;line-height:1.45}.task.done .task-title{text-decoration:line-through;color:#6b777b}.task.done{background:#fbfef9}
+.note{font-size:12px;color:var(--muted);line-height:1.5;margin-top:18px}.pill{font-size:12px;background:#e7f6fc;color:#08739b;border-radius:8px;padding:5px 8px}
+@media(max-width:600px){.brand h1{font-size:25px}.task{grid-template-columns:24px 1fr;gap:9px}.date{grid-column:2}.task-title,.task-desc{grid-column:2}.task input{grid-row:1 / span 3}.toolbar{align-items:flex-start}}
+</style>
+</head>
+<body>
+<header><div class="wrap brand"><div class="mark">✦</div><div><h1>EcoFly</h1><p>Cronograma de trabajo · Seguimiento compartido</p></div></div></header>
+<main>
+<section class="intro">
+<h2>Planificación del proyecto</h2>
+<p>Marca cada tarea cuando esté terminada. Los cambios se guardan en Supabase para que el resto del equipo pueda ver el progreso desde otros dispositivos.</p>
+<div id="connection" class="status"><span class="dot"></span><span id="connectionText">Conectando con Supabase…</span></div>
+</section>
+<section class="intro">
+<div class="toolbar"><div><div class="progress"><span id="doneCount">0</span> de <span id="totalCount">0</span> tareas completadas</div><div class="bar"><span id="progressBar"></span></div></div><span class="pill">21 oct. – 6 nov. 2026</span></div>
+<div id="timeline"></div>
+<p class="note">Los cambios compartidos pueden tardar unos segundos en aparecer. Si la conexión falla, comprueba la URL y la clave pública de Supabase. No introduzcas nunca una clave secreta en este archivo.</p>
+</section>
+</main>
+<script>
+/* Configuración pública de Supabase. Solo usar la publishable key, nunca sb_secret. */
+const SUPABASE_URL = "https://ksxiaxybvxugqnzkceyw.supabase.co";
+const SUPABASE_KEY = "sb_publishable_1vv35_Bw5Bgw1z2FRTYz4g_TSsE8d1f";
+const TABLE = "ecofly_task_status";
+
+const tasks = [
+ {date:"21/10/2026",group:"21–23 de octubre · Planificación",title:"Definir el objetivo y alcance del proyecto",desc:"Acordar qué debe incluir la web y organizar el trabajo del equipo."},
+ {date:"21/10/2026",group:"21–23 de octubre · Planificación",title:"Revisar la información de la empresa",desc:"Reunir la información necesaria y comprobar que los contenidos sean coherentes."},
+ {date:"22/10/2026",group:"21–23 de octubre · Planificación",title:"Organizar las tareas y responsabilidades",desc:"Repartir el trabajo, fijar prioridades y preparar el cronograma."},
+ {date:"22/10/2026",group:"21–23 de octubre · Planificación",title:"Preparar la estructura de la página web",desc:"Definir las secciones, el orden de navegación y los contenidos principales."},
+ {date:"23/10/2026",group:"21–23 de octubre · Planificación",title:"Revisar la identidad visual de EcoFly",desc:"Usar el logotipo y la paleta corporativa acordada para mantener coherencia visual."},
+ {date:"26/10/2026",group:"26–30 de octubre · Desarrollo",title:"Crear el diseño visual de la web",desc:"Preparar una presentación clara, moderna, adaptable y fácil de navegar."},
+ {date:"26/10/2026",group:"26–30 de octubre · Desarrollo",title:"Redactar y ordenar los contenidos",desc:"Revisar textos, títulos y descripciones antes de publicarlos."},
+ {date:"27/10/2026",group:"26–30 de octubre · Desarrollo",title:"Preparar imágenes y recursos gráficos",desc:"Seleccionar recursos visuales apropiados y optimizarlos para la web."},
+ {date:"27/10/2026",group:"26–30 de octubre · Desarrollo",title:"Desarrollar las secciones de la web",desc:"Montar las páginas y los componentes necesarios para el proyecto."},
+ {date:"28/10/2026",group:"26–30 de octubre · Desarrollo",title:"Añadir catálogo y fichas de producto",desc:"Organizar los drones, accesorios y la información técnica disponible."},
+ {date:"28/10/2026",group:"26–30 de octubre · Desarrollo",title:"Añadir información de contacto y preguntas frecuentes",desc:"Facilitar que los visitantes encuentren respuestas y sepan cómo contactar."},
+ {date:"29/10/2026",group:"26–30 de octubre · Desarrollo",title:"Comprobar enlaces y navegación",desc:"Revisar botones, menús, enlaces y funcionamiento general."},
+ {date:"30/10/2026",group:"26–30 de octubre · Desarrollo",title:"Revisar la web en móvil y ordenador",desc:"Comprobar que el diseño se adapte a diferentes tamaños de pantalla."},
+ {date:"02/11/2026",group:"2–6 de noviembre · Revisión y entrega",title:"Corregir errores de contenido y diseño",desc:"Aplicar los cambios detectados durante las pruebas."},
+ {date:"03/11/2026",group:"2–6 de noviembre · Revisión y entrega",title:"Revisar accesibilidad y legibilidad",desc:"Comprobar contraste, tamaños de texto, etiquetas y claridad de la información."},
+ {date:"04/11/2026",group:"2–6 de noviembre · Revisión y entrega",title:"Publicar la web en GitHub Pages",desc:"Verificar que el sitio esté disponible mediante su enlace público."},
+ {date:"05/11/2026",group:"2–6 de noviembre · Revisión y entrega",title:"Hacer una revisión final en equipo",desc:"Probar la web publicada y confirmar que el contenido está completo."},
+ {date:"06/11/2026",group:"2–6 de noviembre · Revisión y entrega",title:"Entregar el proyecto",desc:"Preparar el enlace y los materiales finales para la entrega."}
+];
+let status = {};
+let syncing = false;
+const timeline = document.getElementById("timeline");
+const conn = document.getElementById("connection");
+const connText = document.getElementById("connectionText");
+function setConnection(kind, text){conn.className="status "+kind;connText.textContent=text;}
+function render(){
+ timeline.innerHTML="";
+ const groups = [...new Set(tasks.map(t=>t.group))];
+ groups.forEach(group=>{
+   const section=document.createElement("section"); section.className="group";
+   const h=document.createElement("h3"); h.textContent=group; section.appendChild(h);
+   tasks.forEach((task,index)=>{
+     if(task.group!==group)return;
+     const row=document.createElement("label"); row.className="task"+(status[index]?" done":"");
+     const check=document.createElement("input"); check.type="checkbox"; check.checked=!!status[index]; check.setAttribute("aria-label","Completar: "+task.title);
+     check.addEventListener("change",()=>saveTask(index,check.checked,row,check));
+     const date=document.createElement("span");date.className="date";date.textContent=task.date;
+     const content=document.createElement("div");
+     const title=document.createElement("div");title.className="task-title";title.textContent=task.title;
+     const desc=document.createElement("div");desc.className="task-desc";desc.textContent=task.desc;
+     content.append(title,desc);row.append(check,date,content);section.appendChild(row);
+   });
+   timeline.appendChild(section);
+ });
+ updateProgress();
+}
+function updateProgress(){
+ const done=tasks.reduce((n,_,i)=>n+(status[i]?1:0),0);
+ document.getElementById("doneCount").textContent=done;
+ document.getElementById("totalCount").textContent=tasks.length;
+ document.getElementById("progressBar").style.width=(done/tasks.length*100)+"%";
+}
+async function api(path,options={}){
+ const res=await fetch(SUPABASE_URL+"/rest/v1/"+path,{
+   ...options,headers:{"apikey":SUPABASE_KEY,"Authorization":"Bearer "+SUPABASE_KEY,"Content-Type":"application/json","Accept":"application/json",...(options.headers||{})}
+ });
+ if(!res.ok) throw new Error("Supabase HTTP "+res.status+" "+(await res.text()).slice(0,180));
+ return res.status===204?null:res.json();
+}
+async function loadRemote(initial=false){
+ if(syncing)return; syncing=true;
+ try{
+   const rows=await api(TABLE+"?select=task_id,completed");
+   const next={};
+   rows.forEach(r=>{if(Number.isInteger(r.task_id)&&r.task_id>=0&&r.task_id<tasks.length)next[r.task_id]=!!r.completed;});
+   const changed=tasks.some((_,i)=>!!status[i]!==!!next[i]);
+   status=next;
+   if(initial||changed)render();
+   setConnection("ok","Cronograma compartido conectado");
+ }catch(e){
+   setConnection("err","No se ha podido conectar. Revisa la configuración de Supabase.");
+   console.error(e);
+ }finally{syncing=false;}
+}
+async function saveTask(index,completed,row,check){
+ status[index]=completed; row.classList.toggle("done",completed);updateProgress();
+ try{
+   await api(TABLE+"?on_conflict=task_id",{method:"POST",headers:{"Prefer":"resolution=merge-duplicates,return=minimal"},body:JSON.stringify({task_id:index,completed})});
+   setConnection("ok","Cambio guardado y compartido");
+   setTimeout(()=>setConnection("ok","Cronograma compartido conectado"),1800);
+ }catch(e){
+   setConnection("err","No se pudo guardar el cambio. Revisa Supabase.");
+   console.error(e);
+ }
+}
+render();
+loadRemote(true);
+setInterval(()=>loadRemote(false),4000);
+</script>
+</body>
+</html>
